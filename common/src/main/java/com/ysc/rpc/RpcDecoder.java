@@ -18,24 +18,25 @@ package com.ysc.rpc;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.util.List;
 
-public class RpcDecoder extends MessageToMessageDecoder<ByteBuf> {
+public class RpcDecoder extends ByteToMessageDecoder {
 
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 
-    byte[] bytes = new byte[in.readableBytes()];
+    final byte[] bytes = new byte[in.readableBytes()];
     in.readBytes(bytes);
 
-    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-    ObjectInputStream ois = new ObjectInputStream(bis);
+    try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        final ObjectInputStream ois = new ObjectInputStream(bis)) {
 
-    Object obj = ois.readObject();
+      Object obj = ois.readObject();
 
-    out.add(obj);
+      out.add(obj);
+    }
   }
 }

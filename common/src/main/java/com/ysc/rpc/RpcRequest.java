@@ -16,13 +16,14 @@
  */
 package com.ysc.rpc;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RpcRequest implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   private static final AtomicLong REQUEST_ID_GEN = new AtomicLong(0);
 

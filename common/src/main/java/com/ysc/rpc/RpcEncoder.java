@@ -32,14 +32,14 @@ public class RpcEncoder extends MessageToByteEncoder<Object> {
       throw new IllegalArgumentException("Message must implement Serializable");
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream(bos);
+    try (final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+      oos.writeObject(msg);
+      oos.flush();
 
-    oos.writeObject(msg);
-    oos.flush();
+      final byte[] bytes = bos.toByteArray();
 
-    byte[] bytes = bos.toByteArray();
-
-    out.writeBytes(bytes);
+      out.writeBytes(bytes);
+    }
   }
 }

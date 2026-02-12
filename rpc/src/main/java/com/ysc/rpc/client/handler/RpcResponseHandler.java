@@ -17,25 +17,19 @@
 package com.ysc.rpc.client.handler;
 
 import com.ysc.rpc.RpcResponse;
+import com.ysc.rpc.client.manager.RpcFutureManager;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.concurrent.Promise;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ChannelHandler.Sharable
 public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
-  /**
-   * map of requestId to promise, used to correlate responses with requests and complete the
-   * promises
-   */
-  public static final Map<Long, Promise<Object>> PROMISES = new ConcurrentHashMap<>();
-
   @Override
   protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
-    Promise<Object> promise = PROMISES.remove(msg.getRequestId());
+    final Promise<Object> promise = RpcFutureManager.remove(msg.getRequestId());
+
     if (promise != null) {
       if (msg.isSuccess()) {
         promise.setSuccess(msg.getResult());

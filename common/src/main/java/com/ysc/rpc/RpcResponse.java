@@ -16,11 +16,12 @@
  */
 package com.ysc.rpc;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class RpcResponse implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   /** 响应的唯一标识，对应请求的 requestId */
   private final Long requestId;
@@ -55,7 +56,7 @@ public class RpcResponse implements Serializable {
     this.result = result;
     this.errorMessage = errorMessage;
     this.executionTime = executionTime;
-    this.success = success; // 修复：使用传入的 success 参数
+    this.success = success;
   }
 
   public Long getRequestId() {

@@ -22,38 +22,45 @@ import com.ysc.rpc.server.registry.ServerRegistry;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @ChannelHandler.Sharable
 public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
+  private static final ExecutorService RPC_REQUEST_HANDLER_POOL = Executors.newFixedThreadPool(16);
+
   @Override
   protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest) {
+    RPC_REQUEST_HANDLER_POOL.submit(
+        () -> {
+          RpcResponse response;
+          long startTime = 0L;
+          long endTime;
 
-    RpcResponse response;
-    long startTime = 0L;
-    long endTime;
+          try {
+            startTime = System.currentTimeMillis();
 
-    try {
-      startTime = System.currentTimeMillis();
+            final Object instance = ServerRegistry.getService(rpcRequest.getInterfaceName());
 
-      final Object instance = ServerRegistry.getService(rpcRequest.getInterfaceName());
+            if (instance == null) {
+              throw new RuntimeException("Service not found: " + rpcRequest.getInterfaceName());
+            }
 
-      if (instance == null) {
-        throw new RuntimeException("Service not found: " + rpcRequest.getInterfaceName());
-      }
+            final Object result =
+                instance
+                    .getClass()
+                    .getMethod(rpcRequest.getMethodName(), rpcRequest.getParamTypes())
+                    .invoke(instance, rpcRequest.getParamValues());
+            endTime = System.currentTimeMillis();
+            response = new RpcResponse(rpcRequest.getRequestId(), result, endTime - startTime);
+          } catch (final Exception e) {
+            endTime = System.currentTimeMillis();
+            response =
+                new RpcResponse(rpcRequest.getRequestId(), e.getMessage(), endTime - startTime);
+          }
 
-      final Object result =
-          instance
-              .getClass()
-              .getMethod(rpcRequest.getMethodName(), rpcRequest.getParamTypes())
-              .invoke(instance, rpcRequest.getParamValues());
-      endTime = System.currentTimeMillis();
-      response = new RpcResponse(rpcRequest.getRequestId(), result, endTime - startTime);
-    } catch (final Exception e) {
-      endTime = System.currentTimeMillis();
-      response = new RpcResponse(rpcRequest.getRequestId(), e.getMessage(), endTime - startTime);
-    }
-
-    channelHandlerContext.writeAndFlush(response);
+          channelHandlerContext.writeAndFlush(response);
+        });
   }
 }

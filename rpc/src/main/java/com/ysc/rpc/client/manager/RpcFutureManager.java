@@ -14,23 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.api;
+package com.ysc.rpc.client.manager;
 
-public interface UserService {
-  /**
-   * say hello
-   *
-   * @param name name
-   * @return hello message
-   */
-  String sayHello(String name);
+import io.netty.util.concurrent.Promise;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class RpcFutureManager {
 
   /**
-   * add two numbers
-   *
-   * @param a number a
-   * @param b number b
-   * @return sum of a and b
+   * map of requestId to promise, used to correlate responses with requests and complete the
+   * promises
    */
-  long add(long a, long b);
+  public static final Map<Long, Promise<Object>> PROMISES = new ConcurrentHashMap<>();
+
+  private RpcFutureManager() {
+    // private constructor to prevent instantiation
+  }
+
+  public static void put(final Long requestId, final Promise<Object> promise) {
+    PROMISES.put(requestId, promise);
+  }
+
+  public static Promise<Object> remove(final Long requestId) {
+    return PROMISES.remove(requestId);
+  }
+
+  public static Promise<Object> get(final Long requestId) {
+    return PROMISES.get(requestId);
+  }
 }

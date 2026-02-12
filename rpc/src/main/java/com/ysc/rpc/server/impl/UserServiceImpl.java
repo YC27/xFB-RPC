@@ -22,6 +22,11 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public String sayHello(final String name) {
-    return "hello, " + name;
+    return "Hello, " + name + "!";
+  }
+
+  @Override
+  public long add(final long a, final long b) {
+    return a + b;
   }
 }

@@ -19,13 +19,15 @@ package com.ysc.rpc.client;
 import com.ysc.api.UserService;
 
 public class ClientApplication {
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) {
     final RpcClient client = new RpcClient("localhost", 8080);
 
     Runtime.getRuntime().addShutdownHook(new Thread(client::stop));
     client.start();
 
-    final UserService userService = client.getServiceProxy(UserService.class);
-    System.out.println(userService.sayHello("World"));
+    final UserService userServiceAsync = client.getServiceProxy(UserService.class);
+    final UserService userServiceSync = client.getServiceProxy(UserService.class);
+    System.out.println(userServiceAsync.sayHello("World"));
+    System.out.println(userServiceSync.add(1, 2));
   }
 }

@@ -20,6 +20,7 @@ import com.ysc.rpc.RpcDecoder;
 import com.ysc.rpc.RpcEncoder;
 import com.ysc.rpc.RpcRequest;
 import com.ysc.rpc.client.handler.RpcResponseHandler;
+import com.ysc.rpc.client.manager.RpcFutureManager;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -37,8 +38,10 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Promise;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,10 +49,16 @@ public class RpcClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RpcClient.class);
 
-  /** host and port of the RPC server to connect to */
+  /** host of the RPC server to connect to */
   private final String host;
 
+  /** port of the RPC server to connect to */
   private final int port;
+
+  /**
+   * timeout for RPC calls in milliseconds, used to prevent hanging if the server does not respond
+   */
+  private final long timeoutMillis = 5000;
 
   /** Netty components for managing the client connection */
   private EventLoopGroup group;
@@ -159,6 +168,57 @@ public class RpcClient {
     started = false;
   }
 
+  private Object send(final RpcRequest request) throws Throwable {
+    if (getChannel().eventLoop().inEventLoop()) {
+      throw new IllegalStateException("Cannot send RPC request from the event loop thread");
+    }
+
+    final DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
+    sendRequest(request, promise);
+
+    final boolean completed = promise.awaitUninterruptibly(timeoutMillis);
+
+    if (!completed) {
+      throw new RuntimeException("RPC request timed out");
+    }
+
+    if (promise.isSuccess()) {
+      return promise.getNow();
+    } else {
+      throw promise.cause();
+    }
+  }
+
+  private void sendRequest(final RpcRequest request, final DefaultPromise<Object> promise) {
+    RpcFutureManager.put(request.getRequestId(), promise);
+
+    getChannel()
+        .writeAndFlush(request)
+        .addListener(
+            (ChannelFutureListener)
+                future -> {
+                  if (!future.isSuccess()) {
+                    LOGGER.warn("Failed to send RPC request: {}", request, future.cause());
+                    RpcFutureManager.remove(request.getRequestId());
+                    promise.tryFailure(future.cause());
+                  }
+                });
+
+    getChannel()
+        .eventLoop()
+        .schedule(
+            () -> {
+              final Promise<Object> timeoutPromise = RpcFutureManager.get(request.getRequestId());
+
+              if (timeoutPromise != null && !timeoutPromise.isDone()) {
+                LOGGER.warn("RPC request timed out: {}", request);
+                timeoutPromise.setFailure(new TimeoutException("RPC request timed out"));
+              }
+            },
+            timeoutMillis,
+            TimeUnit.MILLISECONDS);
+  }
+
   /**
    * create a dynamic proxy for the given service interface, which will send RPC requests to the
    * server when methods are invoked on the proxy instance. the proxy will block until a response is
@@ -178,14 +238,12 @@ public class RpcClient {
    * @throws RuntimeException if the RPC call fails, with the cause of the failure included in the
    *     exception message
    */
+  @SuppressWarnings("unchecked")
   public <T> T getServiceProxy(final Class<T> serviceClass) {
-    final ClassLoader loader = serviceClass.getClassLoader();
-    final Class<?>[] interfaces = new Class<?>[] {serviceClass};
-
-    final Object o =
+    return (T)
         Proxy.newProxyInstance(
-            loader,
-            interfaces,
+            serviceClass.getClassLoader(),
+            new Class<?>[] {serviceClass},
             (proxy, method, args) -> {
               final RpcRequest request =
                   new RpcRequest(
@@ -195,20 +253,21 @@ public class RpcClient {
                       method.getParameterTypes(),
                       args);
 
-              final DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
-              RpcResponseHandler.PROMISES.put(request.getRequestId(), promise);
-              getChannel().writeAndFlush(request);
-
-              promise.awaitUninterruptibly();
-
-              if (promise.isSuccess()) {
-                return promise.getNow();
-              } else {
-                LOGGER.warn("RPC call failed for request: {}", request, promise.cause());
-                throw new RuntimeException(promise.cause());
+              try {
+                return send(request);
+              } catch (final Throwable e) {
+                LOGGER.warn(
+                    "RPC call failed for method: {}.{}",
+                    serviceClass.getName(),
+                    method.getName(),
+                    e);
+                throw new RuntimeException(
+                    "RPC call failed for method: "
+                        + serviceClass.getName()
+                        + "."
+                        + method.getName(),
+                    e);
               }
             });
-
-    return (T) o;
   }
 }
