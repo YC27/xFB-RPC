@@ -14,21 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.client;
+package com.ysc.service;
 
-import com.ysc.api.UserService;
-import com.ysc.rpc.netty.RpcClient;
+/**
+ * A common interface for all services in the registry module. Each service should implement this
+ * interface and provide its own start and stop logic.
+ */
+public interface IService {
 
-public class ClientApplication {
-  public static void main(String[] args) {
-    final RpcClient client = new RpcClient("client", "localhost", 8080);
+  /** start the service, e.g., start a server to listen for requests */
+  void start();
 
-    Runtime.getRuntime().addShutdownHook(new Thread(client::stop));
-    client.start();
-
-    final UserService userServiceAsync = client.getServiceProxy(UserService.class);
-    final UserService userServiceSync = client.getServiceProxy(UserService.class);
-    System.out.println(userServiceAsync.sayHello("World"));
-    System.out.println(userServiceSync.add(1, 2));
-  }
+  /** stop the service, e.g., stop the server and release resources */
+  void stop();
 }

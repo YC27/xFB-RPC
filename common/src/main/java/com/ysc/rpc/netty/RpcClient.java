@@ -49,6 +49,11 @@ public class RpcClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RpcClient.class);
 
+  /**
+   * optional service name for logging or future use, can be set to a default value or left empty
+   */
+  private final String serviceId;
+
   /** host of the RPC server to connect to */
   private final String host;
 
@@ -78,7 +83,8 @@ public class RpcClient {
    */
   private static final RpcResponseHandler RPC_RESPONSE_HANDLER = new RpcResponseHandler();
 
-  public RpcClient(final String host, final int port) {
+  public RpcClient(final String serviceId, final String host, final int port) {
+    this.serviceId = serviceId;
     this.host = host;
     this.port = port;
   }
@@ -247,6 +253,7 @@ public class RpcClient {
             (proxy, method, args) -> {
               final RpcRequest request =
                   new RpcRequest(
+                      serviceId,
                       serviceClass.getName(),
                       method.getName(),
                       method.getReturnType(),

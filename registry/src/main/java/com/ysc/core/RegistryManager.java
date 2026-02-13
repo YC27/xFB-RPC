@@ -16,7 +16,6 @@
  */
 package com.ysc.core;
 
-import com.ysc.api.RegisterService;
 import com.ysc.entity.ServiceInstance;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +24,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RegistryServiceImpl implements RegisterService {
+public class RegistryManager {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RegistryServiceImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RegistryManager.class);
 
   /** service registry map: serviceId -> list of service instances */
-  private final Map<String, List<ServiceInstance>> registryMap = new ConcurrentHashMap<>();
+  private static final Map<String, List<ServiceInstance>> REGISTRY_MAP = new ConcurrentHashMap<>();
 
   /**
    * get a service instance by serviceId, with simple load balancing
@@ -39,7 +38,7 @@ public class RegistryServiceImpl implements RegisterService {
    * @return a service instance, or null if no instance is available
    */
   public ServiceInstance get(final String serviceId) {
-    final List<ServiceInstance> instances = registryMap.get(serviceId);
+    final List<ServiceInstance> instances = REGISTRY_MAP.get(serviceId);
     if (instances == null || instances.isEmpty()) {
       LOGGER.warn("No service instance found for serviceId: {}", serviceId);
       return null;
@@ -60,9 +59,8 @@ public class RegistryServiceImpl implements RegisterService {
    *
    * @param instance the service instance to register
    */
-  @Override
   public void register(final ServiceInstance instance) {
-    registryMap
+    REGISTRY_MAP
         .computeIfAbsent(instance.getServiceId(), k -> new CopyOnWriteArrayList<>())
         .add(instance);
     LOGGER.info("Registered service instance: {}", instance);
@@ -76,7 +74,7 @@ public class RegistryServiceImpl implements RegisterService {
    * @param port service port, e.g., 8080
    */
   public void remove(final String serviceId, final String host, final int port) {
-    final List<ServiceInstance> instances = registryMap.get(serviceId);
+    final List<ServiceInstance> instances = REGISTRY_MAP.get(serviceId);
 
     if (instances != null) {
       instances.removeIf(instance -> instance.getHost().equals(host) && instance.getPort() == port);
@@ -84,15 +82,29 @@ public class RegistryServiceImpl implements RegisterService {
     }
   }
 
-  private static class ServiceRegistryHolder {
-    private static final RegisterService INSTANCE = new RegistryServiceImpl();
+  /**
+   * remove all service instances for a given serviceId
+   *
+   * @param serviceId service's unique identifier, e.g., "com.ysc.api.UserService"
+   */
+  public void remove(final String serviceId) {
+    REGISTRY_MAP.remove(serviceId);
+    LOGGER.info("Removed all service instances for serviceId: {}", serviceId);
   }
 
-  public static RegisterService getInstance() {
-    return ServiceRegistryHolder.INSTANCE;
+  public Map<String, List<ServiceInstance>> getRegistryMap() {
+    return REGISTRY_MAP;
   }
 
-  private RegistryServiceImpl() {
+  private static class RegistryManagerHolder {
+    private static final RegistryManager INSTANCE = new RegistryManager();
+  }
+
+  public static RegistryManager getInstance() {
+    return RegistryManagerHolder.INSTANCE;
+  }
+
+  private RegistryManager() {
     // private constructor to prevent instantiation
   }
 }

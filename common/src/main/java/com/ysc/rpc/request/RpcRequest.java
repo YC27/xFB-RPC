@@ -51,11 +51,13 @@ public class RpcRequest implements Serializable {
   public RpcRequest() {}
 
   public RpcRequest(
+      final String serviceId,
       final String interfaceName,
       final String methodName,
       final Class<?> returnType,
       final Class<?>[] paramTypes,
       final Object[] paramValues) {
+    this.serviceId = serviceId;
     this.requestId = REQUEST_ID_GEN.incrementAndGet();
     this.interfaceName = interfaceName;
     this.methodName = methodName;

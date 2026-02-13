@@ -23,7 +23,7 @@ import java.util.List;
 
 public class ServerApplication {
   public static void main(String[] args) throws InterruptedException {
-    final RpcServer server = new RpcServer(8080);
+    final RpcServer server = new RpcServer("server", 8080);
     server.start();
 
     server.registerService(List.of(UserService.class), List.of(new UserServiceImpl()));

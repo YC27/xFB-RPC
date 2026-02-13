@@ -44,6 +44,7 @@ public class RpcServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RpcServer.class);
 
+  private final String serviceId;
   private final int port;
 
   private EventLoopGroup bossGroup;
@@ -61,7 +62,8 @@ public class RpcServer {
    */
   private static final RpcRequestHandler RPC_REQUEST_HANDLER = new RpcRequestHandler();
 
-  public RpcServer(final int port) {
+  public RpcServer(final String serviceId, final int port) {
+    this.serviceId = serviceId;
     this.port = port;
   }
 
@@ -108,7 +110,8 @@ public class RpcServer {
               if (channelFuture.isSuccess()) {
                 serverChannel = channelFuture.channel();
                 started = true;
-                LOGGER.info("RPC server started and listening on port {}", port);
+                LOGGER.info(
+                    "RPC server started and listening on port {}, serviceId {}", port, serviceId);
               } else {
                 LOGGER.warn(
                     "Failed to bind to port {}, cause: {}",

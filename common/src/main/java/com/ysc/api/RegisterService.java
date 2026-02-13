@@ -43,4 +43,12 @@ public interface RegisterService {
    * @param port service port, e.g., 8080
    */
   void remove(final String serviceId, final String host, final int port);
+
+  /**
+   * remove all service instances of a service from the registry, e.g., when all the services are
+   * shut down
+   *
+   * @param serviceId service's unique identifier, e.g., "com.ysc.api.UserService"
+   */
+  void remove(final String serviceId);
 }
