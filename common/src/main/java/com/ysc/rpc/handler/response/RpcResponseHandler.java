@@ -14,29 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc;
+package com.ysc.rpc.handler.response;
 
-import io.netty.buffer.ByteBuf;
+import com.ysc.rpc.manager.RpcFutureManager;
+import com.ysc.rpc.response.RpcResponse;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.List;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.concurrent.Promise;
 
-public class RpcDecoder extends ByteToMessageDecoder {
+@ChannelHandler.Sharable
+public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
   @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+  protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
+    final Promise<Object> promise = RpcFutureManager.remove(msg.getRequestId());
 
-    final byte[] bytes = new byte[in.readableBytes()];
-    in.readBytes(bytes);
-
-    try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        final ObjectInputStream ois = new ObjectInputStream(bis)) {
-
-      Object obj = ois.readObject();
-
-      out.add(obj);
+    if (promise != null) {
+      if (msg.isSuccess()) {
+        promise.setSuccess(msg.getResult());
+      } else {
+        promise.setFailure(new RuntimeException(msg.getErrorMessage()));
+      }
     }
   }
 }

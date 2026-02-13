@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.client.manager;
+package com.ysc.rpc.manager;
 
 import io.netty.util.concurrent.Promise;
 import java.util.Map;

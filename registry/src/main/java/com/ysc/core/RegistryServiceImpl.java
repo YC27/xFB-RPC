@@ -16,6 +16,7 @@
  */
 package com.ysc.core;
 
+import com.ysc.api.RegisterService;
 import com.ysc.entity.ServiceInstance;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +25,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServiceRegistry {
+public class RegistryServiceImpl implements RegisterService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ServiceRegistry.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RegistryServiceImpl.class);
 
   /** service registry map: serviceId -> list of service instances */
   private final Map<String, List<ServiceInstance>> registryMap = new ConcurrentHashMap<>();
@@ -37,7 +38,7 @@ public class ServiceRegistry {
    * @param serviceId service's unique identifier, e.g., "com.ysc.api.UserService"
    * @return a service instance, or null if no instance is available
    */
-  public ServiceInstance getServiceInstance(final String serviceId) {
+  public ServiceInstance get(final String serviceId) {
     final List<ServiceInstance> instances = registryMap.get(serviceId);
     if (instances == null || instances.isEmpty()) {
       LOGGER.warn("No service instance found for serviceId: {}", serviceId);
@@ -59,7 +60,8 @@ public class ServiceRegistry {
    *
    * @param instance the service instance to register
    */
-  public void registerServiceInstance(final ServiceInstance instance) {
+  @Override
+  public void register(final ServiceInstance instance) {
     registryMap
         .computeIfAbsent(instance.getServiceId(), k -> new CopyOnWriteArrayList<>())
         .add(instance);
@@ -73,7 +75,7 @@ public class ServiceRegistry {
    * @param host service host, e.g., localhost or IP address
    * @param port service port, e.g., 8080
    */
-  public void removeServiceInstance(final String serviceId, final String host, final int port) {
+  public void remove(final String serviceId, final String host, final int port) {
     final List<ServiceInstance> instances = registryMap.get(serviceId);
 
     if (instances != null) {
@@ -83,14 +85,14 @@ public class ServiceRegistry {
   }
 
   private static class ServiceRegistryHolder {
-    private static final ServiceRegistry INSTANCE = new ServiceRegistry();
+    private static final RegisterService INSTANCE = new RegistryServiceImpl();
   }
 
-  public static ServiceRegistry getInstance() {
+  public static RegisterService getInstance() {
     return ServiceRegistryHolder.INSTANCE;
   }
 
-  private ServiceRegistry() {
+  private RegistryServiceImpl() {
     // private constructor to prevent instantiation
   }
 }

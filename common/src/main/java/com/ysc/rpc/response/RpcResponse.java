@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc;
+package com.ysc.rpc.response;
 
 import java.io.Serial;
 import java.io.Serializable;

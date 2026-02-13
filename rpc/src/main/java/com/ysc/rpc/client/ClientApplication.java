@@ -17,6 +17,7 @@
 package com.ysc.rpc.client;
 
 import com.ysc.api.UserService;
+import com.ysc.rpc.netty.RpcClient;
 
 public class ClientApplication {
   public static void main(String[] args) {

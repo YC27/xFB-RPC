@@ -16,10 +16,17 @@
  */
 package com.ysc.rpc.server;
 
+import com.ysc.api.UserService;
+import com.ysc.rpc.netty.RpcServer;
+import com.ysc.rpc.server.impl.UserServiceImpl;
+import java.util.List;
+
 public class ServerApplication {
   public static void main(String[] args) throws InterruptedException {
     final RpcServer server = new RpcServer(8080);
     server.start();
+
+    server.registerService(List.of(UserService.class), List.of(new UserServiceImpl()));
 
     Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
 

@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.server;
+package com.ysc.rpc.netty;
 
-import com.ysc.api.UserService;
-import com.ysc.rpc.RpcDecoder;
-import com.ysc.rpc.RpcEncoder;
-import com.ysc.rpc.server.handler.RpcRequestHandler;
-import com.ysc.rpc.server.impl.UserServiceImpl;
-import com.ysc.rpc.server.registry.ServerRegistry;
+import com.ysc.registry.ServerRegistry;
+import com.ysc.rpc.codec.RpcDecoder;
+import com.ysc.rpc.codec.RpcEncoder;
+import com.ysc.rpc.handler.request.RpcRequestHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -38,6 +36,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LoggingHandler;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,8 +102,6 @@ public class RpcServer {
 
     final ChannelFuture future = bootstrap.bind(port);
 
-    ServerRegistry.registerService(UserService.class, new UserServiceImpl());
-
     future.addListener(
         (ChannelFutureListener)
             channelFuture -> {
@@ -120,6 +117,20 @@ public class RpcServer {
                 throw new RuntimeException("Failed to bind to port " + port, channelFuture.cause());
               }
             });
+  }
+
+  public void registerService(final Class<?> clazz, final Object serviceInstance) {
+    ServerRegistry.registerService(clazz, serviceInstance);
+  }
+
+  public void registerService(final List<Class<?>> classes, final List<Object> serviceInstances) {
+    if (classes.size() != serviceInstances.size()) {
+      throw new IllegalArgumentException(
+          "Classes and serviceInstances lists must have the same size.");
+    }
+    for (int i = 0; i < classes.size(); i++) {
+      registerService(classes.get(i), serviceInstances.get(i));
+    }
   }
 
   public synchronized void stop() {

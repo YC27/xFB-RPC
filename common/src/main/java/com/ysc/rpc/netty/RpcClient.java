@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.client;
+package com.ysc.rpc.netty;
 
-import com.ysc.rpc.RpcDecoder;
-import com.ysc.rpc.RpcEncoder;
-import com.ysc.rpc.RpcRequest;
-import com.ysc.rpc.client.handler.RpcResponseHandler;
-import com.ysc.rpc.client.manager.RpcFutureManager;
+import com.ysc.rpc.codec.RpcDecoder;
+import com.ysc.rpc.codec.RpcEncoder;
+import com.ysc.rpc.handler.response.RpcResponseHandler;
+import com.ysc.rpc.manager.RpcFutureManager;
+import com.ysc.rpc.request.RpcRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

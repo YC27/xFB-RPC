@@ -14,28 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.client.handler;
+package com.ysc.registry;
 
-import com.ysc.rpc.RpcResponse;
-import com.ysc.rpc.client.manager.RpcFutureManager;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.concurrent.Promise;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-@ChannelHandler.Sharable
-public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
+public class ServerRegistry {
 
-  @Override
-  protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
-    final Promise<Object> promise = RpcFutureManager.remove(msg.getRequestId());
+  /** interface name to service instance map */
+  private static final Map<String, Object> SERVICE_INSTANCE_MAP = new ConcurrentHashMap<>();
 
-    if (promise != null) {
-      if (msg.isSuccess()) {
-        promise.setSuccess(msg.getResult());
-      } else {
-        promise.setFailure(new RuntimeException(msg.getErrorMessage()));
-      }
-    }
+  public static void registerService(final Class<?> interfaceClazz, final Object serviceInstance) {
+    SERVICE_INSTANCE_MAP.put(interfaceClazz.getName(), serviceInstance);
+  }
+
+  public static Object getService(final String interfaceName) {
+    return SERVICE_INSTANCE_MAP.get(interfaceName);
   }
 }

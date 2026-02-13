@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.server.handler;
+package com.ysc.rpc.handler.request;
 
-import com.ysc.rpc.RpcRequest;
-import com.ysc.rpc.RpcResponse;
-import com.ysc.rpc.server.registry.ServerRegistry;
+import com.ysc.registry.ServerRegistry;
+import com.ysc.rpc.request.RpcRequest;
+import com.ysc.rpc.response.RpcResponse;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

@@ -14,21 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.server.registry;
+package com.ysc.rpc.codec;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.List;
 
-public class ServerRegistry {
+public class RpcDecoder extends ByteToMessageDecoder {
 
-  /** interface name to service instance map */
-  private static final Map<String, Object> SERVICE_INSTANCE_MAP = new ConcurrentHashMap<>();
+  @Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 
-  public static void registerService(final Class<?> interfaceClazz, final Object serviceInstance) {
-    SERVICE_INSTANCE_MAP.put(interfaceClazz.getName(), serviceInstance);
-  }
+    final byte[] bytes = new byte[in.readableBytes()];
+    in.readBytes(bytes);
 
-  public static Object getService(final String interfaceName) {
-    return SERVICE_INSTANCE_MAP.get(interfaceName);
+    try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        final ObjectInputStream ois = new ObjectInputStream(bis)) {
+
+      Object obj = ois.readObject();
+
+      out.add(obj);
+    }
   }
 }

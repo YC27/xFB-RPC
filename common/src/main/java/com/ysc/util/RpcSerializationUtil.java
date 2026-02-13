@@ -21,8 +21,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.ysc.rpc.RpcRequest;
-import com.ysc.rpc.RpcResponse;
+import com.ysc.rpc.request.RpcRequest;
+import com.ysc.rpc.response.RpcResponse;
 
 /** RPC 序列化工具 处理 RpcRequest 和 RpcResponse 的序列化/反序列化 */
 public class RpcSerializationUtil {
