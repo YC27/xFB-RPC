@@ -27,25 +27,25 @@ public class RpcRequest implements Serializable {
 
   private static final AtomicLong REQUEST_ID_GEN = new AtomicLong(0);
 
-  /** 请求的唯一标识 */
+  /** unique request id for tracking and correlation */
   private Long requestId;
 
-  /** 被调用的服务标识 */
+  /** service id, used for service discovery and routing */
   private String serviceId;
 
-  /** 被调用的接口名 */
+  /** interface name */
   private String interfaceName;
 
-  /** 被调用的方法名 */
+  /** method name */
   private String methodName;
 
-  /** 方法返回值类型 */
+  /** method return type */
   private Class<?> returnType;
 
-  /** 方法参数类型数组 */
+  /** method parameter types */
   private Class<?>[] paramTypes;
 
-  /** 方法参数值数组 */
+  /** method parameters */
   private Object[] paramValues;
 
   public RpcRequest() {}

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.handler.request;
+package com.ysc.rpc.handler;
 
-import com.ysc.registry.ServerRegistry;
+import com.ysc.rpc.manager.ServiceManager;
 import com.ysc.rpc.request.RpcRequest;
 import com.ysc.rpc.response.RpcResponse;
 import io.netty.channel.ChannelHandler;
@@ -41,7 +41,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
           try {
             startTime = System.currentTimeMillis();
 
-            final Object instance = ServerRegistry.getService(rpcRequest.getInterfaceName());
+            final Object instance = ServiceManager.getService(rpcRequest.getInterfaceName());
 
             if (instance == null) {
               throw new RuntimeException("Service not found: " + rpcRequest.getInterfaceName());

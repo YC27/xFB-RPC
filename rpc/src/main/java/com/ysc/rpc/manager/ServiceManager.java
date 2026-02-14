@@ -14,15 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc;
+package com.ysc.rpc.manager;
 
-import com.ysc.netty.RpcServer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class RegisterCenter {
-  public static void main(String[] args) throws InterruptedException {
-    final RpcServer server = new RpcServer("register-center", 9000);
-    server.start();
+public class ServiceManager {
 
-    Thread.currentThread().join();
+  /** interface name to service instance map */
+  private static final Map<String, Object> SERVICE_INSTANCE_MAP = new ConcurrentHashMap<>();
+
+  public static void registerService(final Class<?> interfaceClazz, final Object serviceInstance) {
+    SERVICE_INSTANCE_MAP.put(interfaceClazz.getName(), serviceInstance);
+  }
+
+  public static Object getService(final String interfaceName) {
+    return SERVICE_INSTANCE_MAP.get(interfaceName);
   }
 }

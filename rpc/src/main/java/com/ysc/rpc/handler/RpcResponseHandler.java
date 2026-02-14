@@ -14,15 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc;
+package com.ysc.rpc.handler;
 
-import com.ysc.netty.RpcServer;
+import com.ysc.rpc.manager.RpcFutureManager;
+import com.ysc.rpc.response.RpcResponse;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.concurrent.Promise;
 
-public class RegisterCenter {
-  public static void main(String[] args) throws InterruptedException {
-    final RpcServer server = new RpcServer("register-center", 9000);
-    server.start();
+@ChannelHandler.Sharable
+public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
-    Thread.currentThread().join();
+  @Override
+  protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
+    final Promise<Object> promise = RpcFutureManager.remove(msg.requestId());
+
+    if (promise != null) {
+      if (msg.success()) {
+        promise.setSuccess(msg.result());
+      } else {
+        promise.setFailure(new RuntimeException(msg.errorMessage()));
+      }
+    }
   }
 }

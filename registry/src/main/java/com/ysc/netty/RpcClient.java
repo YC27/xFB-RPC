@@ -14,15 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc;
+package com.ysc.netty;
 
-import com.ysc.netty.RpcServer;
+import com.ysc.rpc.netty.ClientNode;
+import com.ysc.rpc.request.RpcRequest;
+import io.netty.channel.ChannelPipeline;
 
-public class RegisterCenter {
-  public static void main(String[] args) throws InterruptedException {
-    final RpcServer server = new RpcServer("register-center", 9000);
-    server.start();
+public class RpcClient extends ClientNode {
 
-    Thread.currentThread().join();
+  protected RpcClient(String serviceId) {
+    super(serviceId);
+  }
+
+  @Override
+  protected void addOtherHandlers(final ChannelPipeline pipeline) {}
+
+  @Override
+  protected Object send(RpcRequest request) {
+    return null;
   }
 }

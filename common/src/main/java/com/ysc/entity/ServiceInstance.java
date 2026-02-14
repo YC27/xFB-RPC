@@ -96,4 +96,24 @@ public class ServiceInstance implements Serializable {
   public long getTimestamp() {
     return timestamp;
   }
+
+  @Override
+  public String toString() {
+    return "ServiceInstance{"
+        + "serviceId='"
+        + serviceId
+        + '\''
+        + ", host='"
+        + host
+        + '\''
+        + ", port="
+        + port
+        + ", weight="
+        + weight
+        + ", available="
+        + available
+        + ", timestamp="
+        + timestamp
+        + '}';
+  }
 }

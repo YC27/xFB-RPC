@@ -16,16 +16,15 @@
  */
 package com.ysc.rpc.netty;
 
-import com.ysc.registry.ServerRegistry;
 import com.ysc.rpc.codec.RpcDecoder;
 import com.ysc.rpc.codec.RpcEncoder;
-import com.ysc.rpc.handler.request.RpcRequestHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -36,39 +35,33 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LoggingHandler;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RpcServer {
+public abstract class ServerNode {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RpcServer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerNode.class);
 
-  private final String serviceId;
-  private final int port;
+  protected final String serviceId;
+  protected final int port;
 
   private EventLoopGroup bossGroup;
   private EventLoopGroup workerGroup;
-  private Channel serverChannel;
+  protected Channel serverChannel;
 
   private volatile boolean started = false;
 
   /** LoggingHandler is a Netty handler that logs all events for debugging purposes. */
   private static final LoggingHandler LOGGING_HANDLER = new LoggingHandler();
 
-  /**
-   * RpcRequestHandler is a custom Netty handler that processes incoming RPC requests and generates
-   * responses.
-   */
-  private static final RpcRequestHandler RPC_REQUEST_HANDLER = new RpcRequestHandler();
-
-  public RpcServer(final String serviceId, final int port) {
+  public ServerNode(final String serviceId, final int port) {
     this.serviceId = serviceId;
     this.port = port;
   }
 
-  public synchronized void start() {
+  public void start() {
     if (started) {
+      LOGGER.warn("Server {} is already started", serviceId);
       return;
     }
 
@@ -98,7 +91,8 @@ public class RpcServer {
                 ch.pipeline().addLast(new LengthFieldPrepender(4));
                 ch.pipeline().addLast(new RpcEncoder());
                 ch.pipeline().addLast(LOGGING_HANDLER);
-                ch.pipeline().addLast(RPC_REQUEST_HANDLER);
+
+                addOtherHandlers(ch.pipeline());
               }
             });
 
@@ -112,6 +106,8 @@ public class RpcServer {
                 started = true;
                 LOGGER.info(
                     "RPC server started and listening on port {}, serviceId {}", port, serviceId);
+
+                doSomeOtherInitialization();
               } else {
                 LOGGER.warn(
                     "Failed to bind to port {}, cause: {}",
@@ -122,19 +118,9 @@ public class RpcServer {
             });
   }
 
-  public void registerService(final Class<?> clazz, final Object serviceInstance) {
-    ServerRegistry.registerService(clazz, serviceInstance);
-  }
+  protected abstract void addOtherHandlers(final ChannelPipeline pipeline);
 
-  public void registerService(final List<Class<?>> classes, final List<Object> serviceInstances) {
-    if (classes.size() != serviceInstances.size()) {
-      throw new IllegalArgumentException(
-          "Classes and serviceInstances lists must have the same size.");
-    }
-    for (int i = 0; i < classes.size(); i++) {
-      registerService(classes.get(i), serviceInstances.get(i));
-    }
-  }
+  protected abstract void doSomeOtherInitialization();
 
   public synchronized void stop() {
     if (!started) {

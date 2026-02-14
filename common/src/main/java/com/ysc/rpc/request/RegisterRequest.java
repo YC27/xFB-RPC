@@ -14,21 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.registry;
+package com.ysc.rpc.request;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.Serial;
+import java.io.Serializable;
 
-public class ServerRegistry {
+public record RegisterRequest(String serviceId, String host, int port) implements Serializable {
 
-  /** interface name to service instance map */
-  private static final Map<String, Object> SERVICE_INSTANCE_MAP = new ConcurrentHashMap<>();
+  @Serial private static final long serialVersionUID = 1L;
 
-  public static void registerService(final Class<?> interfaceClazz, final Object serviceInstance) {
-    SERVICE_INSTANCE_MAP.put(interfaceClazz.getName(), serviceInstance);
-  }
-
-  public static Object getService(final String interfaceName) {
-    return SERVICE_INSTANCE_MAP.get(interfaceName);
+  @Override
+  public String toString() {
+    return "RegisterRequest{"
+        + "serviceId='"
+        + serviceId
+        + '\''
+        + ", host='"
+        + host
+        + '\''
+        + ", port="
+        + port
+        + '}';
   }
 }

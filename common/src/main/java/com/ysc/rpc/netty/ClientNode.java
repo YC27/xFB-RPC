@@ -18,15 +18,11 @@ package com.ysc.rpc.netty;
 
 import com.ysc.rpc.codec.RpcDecoder;
 import com.ysc.rpc.codec.RpcEncoder;
-import com.ysc.rpc.handler.response.RpcResponseHandler;
-import com.ysc.rpc.manager.RpcFutureManager;
 import com.ysc.rpc.request.RpcRequest;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -37,60 +33,45 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.concurrent.DefaultPromise;
-import io.netty.util.concurrent.Promise;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RpcClient {
+public abstract class ClientNode {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RpcClient.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientNode.class);
+
+  protected static final String REGISTER_CENTER_HOST = "localhost";
+  protected static final int REGISTER_CENTER_PORT = 9000;
 
   /**
    * optional service name for logging or future use, can be set to a default value or left empty
    */
-  private final String serviceId;
-
-  /** host of the RPC server to connect to */
-  private final String host;
-
-  /** port of the RPC server to connect to */
-  private final int port;
+  protected final String serviceId;
 
   /**
    * timeout for RPC calls in milliseconds, used to prevent hanging if the server does not respond
    */
-  private final long timeoutMillis = 5000;
+  protected final long timeoutMillis = 5000;
 
   /** Netty components for managing the client connection */
-  private EventLoopGroup group;
+  protected EventLoopGroup group;
 
-  private Bootstrap bootstrap;
-  private volatile Channel channel;
+  protected Bootstrap bootstrap;
 
   /** flag to indicate if the client has been started, used to prevent multiple starts/stops */
-  private volatile boolean started = false;
+  protected volatile boolean started = false;
 
   /** shared logging handler instance, can be reused across channels since it's stateless */
-  private static final LoggingHandler LOGGING_HANDLER = new LoggingHandler();
+  protected static final LoggingHandler LOGGING_HANDLER = new LoggingHandler();
 
-  /**
-   * shared RPC response handler instance, can be reused across channels since it uses a concurrent
-   * map for promises
-   */
-  private static final RpcResponseHandler RPC_RESPONSE_HANDLER = new RpcResponseHandler();
-
-  public RpcClient(final String serviceId, final String host, final int port) {
+  protected ClientNode(final String serviceId) {
     this.serviceId = serviceId;
-    this.host = host;
-    this.port = port;
   }
 
-  public synchronized void start() {
+  public void start() {
     if (started) {
+      LOGGER.warn("Client is already started");
       return;
     }
 
@@ -115,115 +96,15 @@ public class RpcClient {
                 ch.pipeline().addLast(new LengthFieldPrepender(4));
                 ch.pipeline().addLast(new RpcEncoder());
                 ch.pipeline().addLast(LOGGING_HANDLER);
-                ch.pipeline().addLast(RPC_RESPONSE_HANDLER);
+
+                addOtherHandlers(ch.pipeline());
               }
             });
-
-    doConnect();
 
     started = true;
   }
 
-  private void doConnect() {
-    try {
-      final ChannelFuture future = bootstrap.connect(host, port).sync();
-      channel = future.channel();
-      LOGGER.info("Connected to server {}:{}", host, port);
-
-      channel
-          .closeFuture()
-          .addListener(
-              (ChannelFutureListener)
-                  closeFuture -> {
-                    LOGGER.warn("Connection to server closed, reconnecting...");
-                    channel = null;
-                    scheduleReconnect();
-                  });
-    } catch (final InterruptedException e) {
-      Thread.currentThread().interrupt();
-      LOGGER.warn("Failed to connect to server {}:{}", host, port, e);
-      scheduleReconnect();
-    }
-  }
-
-  private void scheduleReconnect() {
-    LOGGER.info("Reconnecting to server in 5 seconds...");
-    group.schedule(this::doConnect, 5, TimeUnit.SECONDS);
-  }
-
-  public Channel getChannel() {
-    if (channel != null && channel.isActive()) {
-      return channel;
-    }
-
-    LOGGER.warn("Channel is not active. Please ensure the client is connected.");
-    throw new IllegalStateException(
-        "Channel is not active. Please ensure the client is connected.");
-  }
-
-  public synchronized void stop() {
-    if (!started) {
-      return;
-    }
-
-    if (channel != null) {
-      channel.close();
-    }
-
-    group.shutdownGracefully();
-    started = false;
-  }
-
-  private Object send(final RpcRequest request) throws Throwable {
-    if (getChannel().eventLoop().inEventLoop()) {
-      throw new IllegalStateException("Cannot send RPC request from the event loop thread");
-    }
-
-    final DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
-    sendRequest(request, promise);
-
-    final boolean completed = promise.awaitUninterruptibly(timeoutMillis);
-
-    if (!completed) {
-      throw new RuntimeException("RPC request timed out");
-    }
-
-    if (promise.isSuccess()) {
-      return promise.getNow();
-    } else {
-      throw promise.cause();
-    }
-  }
-
-  private void sendRequest(final RpcRequest request, final DefaultPromise<Object> promise) {
-    RpcFutureManager.put(request.getRequestId(), promise);
-
-    getChannel()
-        .writeAndFlush(request)
-        .addListener(
-            (ChannelFutureListener)
-                future -> {
-                  if (!future.isSuccess()) {
-                    LOGGER.warn("Failed to send RPC request: {}", request, future.cause());
-                    RpcFutureManager.remove(request.getRequestId());
-                    promise.tryFailure(future.cause());
-                  }
-                });
-
-    getChannel()
-        .eventLoop()
-        .schedule(
-            () -> {
-              final Promise<Object> timeoutPromise = RpcFutureManager.get(request.getRequestId());
-
-              if (timeoutPromise != null && !timeoutPromise.isDone()) {
-                LOGGER.warn("RPC request timed out: {}", request);
-                timeoutPromise.setFailure(new TimeoutException("RPC request timed out"));
-              }
-            },
-            timeoutMillis,
-            TimeUnit.MILLISECONDS);
-  }
+  protected abstract void addOtherHandlers(ChannelPipeline pipeline);
 
   /**
    * create a dynamic proxy for the given service interface, which will send RPC requests to the
@@ -236,9 +117,9 @@ public class RpcClient {
    * exception is thrown
    *
    * @param serviceClass the service interface class, e.g., UserService.class
+   * @param <T> the type of the service interface, e.g., UserService
    * @return a proxy instance that implements the service interface, and sends RPC requests to the
    *     server when methods are invoked on the proxy instance
-   * @param <T> the type of the service interface, e.g., UserService
    * @throws IllegalStateException if the client is not connected to the server, or if the channel
    *     is not active
    * @throws RuntimeException if the RPC call fails, with the cause of the failure included in the
@@ -253,7 +134,7 @@ public class RpcClient {
             (proxy, method, args) -> {
               final RpcRequest request =
                   new RpcRequest(
-                      serviceId,
+                      "server",
                       serviceClass.getName(),
                       method.getName(),
                       method.getReturnType(),
@@ -277,4 +158,6 @@ public class RpcClient {
               }
             });
   }
+
+  protected abstract Object send(RpcRequest request) throws Throwable;
 }

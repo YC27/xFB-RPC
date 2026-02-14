@@ -19,34 +19,12 @@ package com.ysc.rpc.response;
 import java.io.Serial;
 import java.io.Serializable;
 
-public record RpcResponse(
-    Long requestId, Object result, String errorMessage, long executionTime, boolean success)
-    implements Serializable {
+public record RegisterResponse(boolean success, String message) implements Serializable {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  public RpcResponse(final Long requestId, final Object result, final long executionTime) {
-    this(requestId, result, null, executionTime, true);
-  }
-
-  public RpcResponse(final Long requestId, final String errorMessage, final long executionTime) {
-    this(requestId, null, errorMessage, executionTime, false);
-  }
-
   @Override
   public String toString() {
-    return "RpcResponse{"
-        + "requestId="
-        + requestId
-        + ", result="
-        + result
-        + ", errorMessage='"
-        + errorMessage
-        + '\''
-        + ", executionTime="
-        + executionTime
-        + ", success="
-        + success
-        + '}';
+    return "RegisterResponse{" + "success=" + success + ", message='" + message + '\'' + '}';
   }
 }

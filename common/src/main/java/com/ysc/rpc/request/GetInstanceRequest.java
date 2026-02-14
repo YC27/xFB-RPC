@@ -14,39 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.response;
+package com.ysc.rpc.request;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-public record RpcResponse(
-    Long requestId, Object result, String errorMessage, long executionTime, boolean success)
+public record GetInstanceRequest(String serviceId, Long requestId, String host, int port)
     implements Serializable {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  public RpcResponse(final Long requestId, final Object result, final long executionTime) {
-    this(requestId, result, null, executionTime, true);
-  }
-
-  public RpcResponse(final Long requestId, final String errorMessage, final long executionTime) {
-    this(requestId, null, errorMessage, executionTime, false);
-  }
-
   @Override
   public String toString() {
-    return "RpcResponse{"
-        + "requestId="
-        + requestId
-        + ", result="
-        + result
-        + ", errorMessage='"
-        + errorMessage
+    return "GetInstanceRequest{"
+        + "serviceId='"
+        + serviceId
         + '\''
-        + ", executionTime="
-        + executionTime
-        + ", success="
-        + success
+        + ", requestId="
+        + requestId
+        + ", host='"
+        + host
+        + '\''
+        + ", port="
+        + port
         + '}';
   }
 }

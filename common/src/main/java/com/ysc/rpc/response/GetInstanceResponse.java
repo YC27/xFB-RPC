@@ -14,28 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.handler.response;
+package com.ysc.rpc.response;
 
-import com.ysc.rpc.manager.RpcFutureManager;
-import com.ysc.rpc.response.RpcResponse;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.concurrent.Promise;
+import com.ysc.entity.ServiceInstance;
+import java.io.Serial;
+import java.io.Serializable;
 
-@ChannelHandler.Sharable
-public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
+public record GetInstanceResponse(
+    Long requestId, boolean success, String message, ServiceInstance instance)
+    implements Serializable {
+
+  @Serial private static final long serialVersionUID = 1L;
 
   @Override
-  protected void channelRead0(ChannelHandlerContext ctx, RpcResponse msg) {
-    final Promise<Object> promise = RpcFutureManager.remove(msg.getRequestId());
-
-    if (promise != null) {
-      if (msg.isSuccess()) {
-        promise.setSuccess(msg.getResult());
-      } else {
-        promise.setFailure(new RuntimeException(msg.getErrorMessage()));
-      }
-    }
+  public String toString() {
+    return "GetInstanceResponse{"
+        + "requestId="
+        + requestId
+        + ", success="
+        + success
+        + ", message='"
+        + message
+        + '\''
+        + ", instance="
+        + instance
+        + '}';
   }
 }

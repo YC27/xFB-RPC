@@ -21,7 +21,7 @@ import com.ysc.rpc.netty.RpcClient;
 
 public class ClientApplication {
   public static void main(String[] args) {
-    final RpcClient client = new RpcClient("client", "localhost", 8080);
+    final RpcClient client = new RpcClient("client");
 
     Runtime.getRuntime().addShutdownHook(new Thread(client::stop));
     client.start();
