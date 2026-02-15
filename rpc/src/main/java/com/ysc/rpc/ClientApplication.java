@@ -14,22 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.server;
+package com.ysc.rpc;
 
 import com.ysc.api.UserService;
-import com.ysc.rpc.netty.RpcServer;
-import com.ysc.rpc.server.impl.UserServiceImpl;
-import java.util.List;
+import com.ysc.rpc.netty.RpcClient;
 
-public class ServerApplication {
-  public static void main(String[] args) throws InterruptedException {
-    final RpcServer server = new RpcServer("server", 8080);
-    server.start();
+public class ClientApplication {
+  public static void main(String[] args) {
+    final RpcClient client = new RpcClient("client");
 
-    server.registerService(List.of(UserService.class), List.of(new UserServiceImpl()));
+    Runtime.getRuntime().addShutdownHook(new Thread(client::stop));
+    client.start();
 
-    Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
-
-    Thread.currentThread().join();
+    final UserService userServiceAsync = client.getServiceProxy(UserService.class);
+    final UserService userServiceSync = client.getServiceProxy(UserService.class);
+    System.out.println(userServiceAsync.sayHello("World"));
+    System.out.println(userServiceSync.add(1, 2));
   }
 }

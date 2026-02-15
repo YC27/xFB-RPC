@@ -14,21 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.client;
+package com.ysc.rpc.impl;
 
 import com.ysc.api.UserService;
-import com.ysc.rpc.netty.RpcClient;
 
-public class ClientApplication {
-  public static void main(String[] args) {
-    final RpcClient client = new RpcClient("client");
+public class UserServiceImpl implements UserService {
 
-    Runtime.getRuntime().addShutdownHook(new Thread(client::stop));
-    client.start();
+  @Override
+  public String sayHello(final String name) {
+    return "Hello, " + name + "!";
+  }
 
-    final UserService userServiceAsync = client.getServiceProxy(UserService.class);
-    final UserService userServiceSync = client.getServiceProxy(UserService.class);
-    System.out.println(userServiceAsync.sayHello("World"));
-    System.out.println(userServiceSync.add(1, 2));
+  @Override
+  public long add(final long a, final long b) {
+    return a + b;
   }
 }

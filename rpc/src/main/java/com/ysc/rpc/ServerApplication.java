@@ -14,19 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.server.impl;
+package com.ysc.rpc;
 
 import com.ysc.api.UserService;
+import com.ysc.rpc.impl.UserServiceImpl;
+import com.ysc.rpc.netty.RpcServer;
+import java.util.List;
 
-public class UserServiceImpl implements UserService {
+public class ServerApplication {
+  public static void main(String[] args) throws InterruptedException {
+    final RpcServer server = new RpcServer("server", 8080);
+    server.start();
 
-  @Override
-  public String sayHello(final String name) {
-    return "Hello, " + name + "!";
-  }
+    server.registerService(List.of(UserService.class), List.of(new UserServiceImpl()));
 
-  @Override
-  public long add(final long a, final long b) {
-    return a + b;
+    Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
+
+    Thread.currentThread().join();
   }
 }
