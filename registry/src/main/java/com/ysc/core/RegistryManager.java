@@ -16,6 +16,8 @@
  */
 package com.ysc.core;
 
+import com.ysc.config.RegisterCenterOption;
+import com.ysc.core.loadbanlance.LoadBalancer;
 import com.ysc.entity.ServiceInstance;
 import java.util.List;
 import java.util.Map;
@@ -44,14 +46,23 @@ public class RegistryManager {
       return null;
     }
 
-    // simple load balancing: randomly select one instance from the list
-    // TODO: implement more advanced load balancing strategies, e.g., round-robin, weighted
-    // random,
-    // etc. also consider service instance health and availability when selecting an instance
-    // for now, we just randomly select one instance from the list
-    final int index = (int) (Math.random() * instances.size());
+    return LoadBalancer.getBalancer(RegisterCenterOption.LOAD_BALANCE_STRATEGY.value())
+        .select(serviceId);
+  }
 
-    return instances.get(index);
+  /**
+   * get all service instances for a given serviceId
+   *
+   * @param serviceId service's unique identifier, e.g., "com.ysc.api.UserService"
+   * @return list of service instances, or empty list if no instance is available
+   */
+  public static List<ServiceInstance> getInstanceList(final String serviceId) {
+    final List<ServiceInstance> instances = REGISTRY_MAP.get(serviceId);
+
+    if (instances == null || instances.isEmpty()) {
+      return List.of();
+    }
+    return instances;
   }
 
   /**

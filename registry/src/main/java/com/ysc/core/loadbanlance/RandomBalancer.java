@@ -14,23 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.config;
+package com.ysc.core.loadbanlance;
 
-public class RegisterCenterOption extends Options {
+import com.ysc.entity.ServiceInstance;
+import java.util.List;
+import java.util.Random;
 
-  public static final Option<Integer> PORT =
-      new Option<>("port", 9000) {
-        @Override
-        public void setValue(final String valueString) {
-          value = Integer.parseInt(valueString);
-        }
-      };
+public class RandomBalancer implements LoadBalancer {
 
-  public static final Option<String> LOAD_BALANCE_STRATEGY =
-      new Option<>("load-balance.strategy", "round-robin") {
-        @Override
-        public void setValue(final String valueString) {
-          value = valueString;
-        }
-      };
+  @Override
+  public ServiceInstance select(final String serviceId) {
+    final List<ServiceInstance> instances = getServiceInstances(serviceId);
+    return instances.get(new Random().nextInt(instances.size()));
+  }
 }
