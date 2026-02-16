@@ -16,8 +16,6 @@
  */
 package com.ysc.rpc.netty;
 
-import com.ysc.rpc.codec.RpcDecoder;
-import com.ysc.rpc.codec.RpcEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -87,9 +85,9 @@ public abstract class ServerNode {
               @Override
               protected void initChannel(final SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 4, 0, 4));
-                ch.pipeline().addLast(new RpcDecoder());
+                addDecoder(ch.pipeline());
                 ch.pipeline().addLast(new LengthFieldPrepender(4));
-                ch.pipeline().addLast(new RpcEncoder());
+                addEncoder(ch.pipeline());
                 ch.pipeline().addLast(LOGGING_HANDLER);
 
                 addOtherHandlers(ch.pipeline());
@@ -117,6 +115,10 @@ public abstract class ServerNode {
               }
             });
   }
+
+  protected abstract void addEncoder(final ChannelPipeline pipeline);
+
+  protected abstract void addDecoder(final ChannelPipeline pipeline);
 
   protected abstract void addOtherHandlers(final ChannelPipeline pipeline);
 

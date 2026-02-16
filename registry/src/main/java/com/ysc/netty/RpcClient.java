@@ -16,6 +16,9 @@
  */
 package com.ysc.netty;
 
+import com.ysc.config.RegisterCenterOption;
+import com.ysc.rpc.codec.decoder.RpcDecoder;
+import com.ysc.rpc.codec.encoder.RpcEncoder;
 import com.ysc.rpc.netty.ClientNode;
 import com.ysc.rpc.request.RpcRequest;
 import io.netty.channel.ChannelPipeline;
@@ -24,6 +27,16 @@ public class RpcClient extends ClientNode {
 
   protected RpcClient(String serviceId) {
     super(serviceId);
+  }
+
+  @Override
+  protected void addDecoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcDecoder(RegisterCenterOption.DECODE_TYPE.value()));
+  }
+
+  @Override
+  protected void addEncoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcEncoder(RegisterCenterOption.ENCODE_TYPE.value()));
   }
 
   @Override

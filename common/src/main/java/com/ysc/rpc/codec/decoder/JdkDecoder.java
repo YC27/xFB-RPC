@@ -14,25 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.core.loadbanlance;
+package com.ysc.rpc.codec.decoder;
 
-import com.ysc.entity.ServiceInstance;
-import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 
-public class RoundRobinBalancer implements LoadBalancer {
-
-  int currentIndex = -1;
-
+public class JdkDecoder implements Decoder {
   @Override
-  public ServiceInstance select(final String serviceId) {
-    final List<ServiceInstance> instances = getServiceInstances(serviceId);
-
-    if (instances == null || instances.isEmpty()) {
-      return null;
+  public Object decode(final byte[] bytes) throws Exception {
+    try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        final ObjectInputStream ois = new ObjectInputStream(bis)) {
+      return ois.readObject();
     }
-
-    currentIndex = (currentIndex + 1) % instances.size();
-
-    return instances.get(currentIndex);
   }
 }

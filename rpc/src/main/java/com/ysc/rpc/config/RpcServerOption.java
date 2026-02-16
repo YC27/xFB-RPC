@@ -17,11 +17,20 @@
 package com.ysc.rpc.config;
 
 public class RpcServerOption extends Options {
+
   public static final Option<Integer> PORT =
-      new Option<Integer>("port", 8080) {
+      new Option<>("port", 8080) {
         @Override
         public void setValue(final String valueString) {
           value = Integer.parseInt(valueString);
+        }
+      };
+
+  public static final Option<String> DECODE_TYPE =
+      new Option<>("decode.type", "java") {
+        @Override
+        public void setValue(final String valueString) {
+          value = valueString;
         }
       };
 }

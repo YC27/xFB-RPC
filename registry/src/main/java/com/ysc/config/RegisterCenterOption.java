@@ -33,4 +33,20 @@ public class RegisterCenterOption extends Options {
           value = valueString;
         }
       };
+
+  public static final Option<String> ENCODE_TYPE =
+      new Option<>("encode.type", "java") {
+        @Override
+        public void setValue(final String valueString) {
+          value = valueString;
+        }
+      };
+
+  public static final Option<String> DECODE_TYPE =
+      new Option<>("decode.type", "java") {
+        @Override
+        public void setValue(final String valueString) {
+          value = valueString;
+        }
+      };
 }

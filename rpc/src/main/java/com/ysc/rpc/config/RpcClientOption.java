@@ -16,4 +16,13 @@
  */
 package com.ysc.rpc.config;
 
-public class RpcClientOption extends Options {}
+public class RpcClientOption extends Options {
+
+  public static final Option<String> ENCODE_TYPE =
+      new Option<>("encode.type", "java") {
+        @Override
+        public void setValue(final String valueString) {
+          value = valueString;
+        }
+      };
+}

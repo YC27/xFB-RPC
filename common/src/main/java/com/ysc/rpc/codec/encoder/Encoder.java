@@ -14,25 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.core.loadbanlance;
+package com.ysc.rpc.codec.encoder;
 
-import com.ysc.entity.ServiceInstance;
-import java.util.List;
+import io.netty.handler.codec.EncoderException;
+import java.util.Map;
 
-public class RoundRobinBalancer implements LoadBalancer {
+public interface Encoder {
 
-  int currentIndex = -1;
+  Map<String, Encoder> ENCODER_MAP = Map.of("java", new JdkEncoder());
 
-  @Override
-  public ServiceInstance select(final String serviceId) {
-    final List<ServiceInstance> instances = getServiceInstances(serviceId);
+  /**
+   * Encodes the given object into a byte array.
+   *
+   * @param obj the object to encode
+   * @return the encoded byte array
+   * @throws EncoderException if encoding fails
+   */
+  byte[] encode(Object obj) throws EncoderException;
 
-    if (instances == null || instances.isEmpty()) {
-      return null;
+  static Encoder getEncoder(final String type) {
+    Encoder encoder = ENCODER_MAP.get(type);
+    if (encoder == null) {
+      throw new IllegalArgumentException("Unsupported encoder type: " + type);
     }
-
-    currentIndex = (currentIndex + 1) % instances.size();
-
-    return instances.get(currentIndex);
+    return encoder;
   }
 }

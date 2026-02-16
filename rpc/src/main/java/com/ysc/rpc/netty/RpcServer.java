@@ -16,6 +16,10 @@
  */
 package com.ysc.rpc.netty;
 
+import com.ysc.rpc.codec.decoder.RpcDecoder;
+import com.ysc.rpc.codec.encoder.RpcEncoder;
+import com.ysc.rpc.config.RpcClientOption;
+import com.ysc.rpc.config.RpcServerOption;
 import com.ysc.rpc.handler.RpcRequestHandler;
 import com.ysc.rpc.manager.ServiceManager;
 import io.netty.channel.ChannelPipeline;
@@ -35,6 +39,16 @@ public class RpcServer extends ServerNode {
 
   public RpcServer(final String serviceId, final int port) {
     super(serviceId, port);
+  }
+
+  @Override
+  protected void addEncoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcEncoder(RpcClientOption.ENCODE_TYPE.value()));
+  }
+
+  @Override
+  protected void addDecoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcDecoder(RpcServerOption.DECODE_TYPE.value()));
   }
 
   @Override

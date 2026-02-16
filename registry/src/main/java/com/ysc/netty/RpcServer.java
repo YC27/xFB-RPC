@@ -16,8 +16,11 @@
  */
 package com.ysc.netty;
 
+import com.ysc.config.RegisterCenterOption;
 import com.ysc.handler.GetInstanceRequestHandler;
 import com.ysc.handler.RegisterRequestHandler;
+import com.ysc.rpc.codec.decoder.RpcDecoder;
+import com.ysc.rpc.codec.encoder.RpcEncoder;
 import com.ysc.rpc.netty.ServerNode;
 import io.netty.channel.ChannelPipeline;
 import org.slf4j.Logger;
@@ -37,8 +40,18 @@ public class RpcServer extends ServerNode {
   private static final GetInstanceRequestHandler GET_INSTANCE_REQUEST_HANDLER =
       new GetInstanceRequestHandler();
 
-  public RpcServer(String serviceId, int port) {
+  public RpcServer(final String serviceId, final int port) {
     super(serviceId, port);
+  }
+
+  @Override
+  protected void addEncoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcEncoder(RegisterCenterOption.ENCODE_TYPE.value()));
+  }
+
+  @Override
+  protected void addDecoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcDecoder(RegisterCenterOption.DECODE_TYPE.value()));
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.ysc.entity.ServiceInstance;
 import java.util.List;
 import java.util.Map;
 
+@FunctionalInterface
 public interface LoadBalancer {
 
   Map<String, LoadBalancer> loadBalancerMap =

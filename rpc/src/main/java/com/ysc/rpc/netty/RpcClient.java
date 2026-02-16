@@ -17,6 +17,10 @@
 package com.ysc.rpc.netty;
 
 import com.ysc.entity.ServiceInstance;
+import com.ysc.rpc.codec.decoder.RpcDecoder;
+import com.ysc.rpc.codec.encoder.RpcEncoder;
+import com.ysc.rpc.config.RpcClientOption;
+import com.ysc.rpc.config.RpcServerOption;
 import com.ysc.rpc.handler.GetInstanceResponseHandler;
 import com.ysc.rpc.handler.RegisterResponseHandler;
 import com.ysc.rpc.handler.RpcResponseHandler;
@@ -94,6 +98,16 @@ public class RpcClient extends ClientNode {
                 LOGGER.warn("Failed to send service registration request", future.cause());
               }
             });
+  }
+
+  @Override
+  protected void addDecoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcDecoder(RpcServerOption.DECODE_TYPE.value()));
+  }
+
+  @Override
+  protected void addEncoder(final ChannelPipeline pipeline) {
+    pipeline.addLast(new RpcEncoder(RpcClientOption.ENCODE_TYPE.value()));
   }
 
   public Channel getChannel(final String host, final int port) {

@@ -16,8 +16,6 @@
  */
 package com.ysc.rpc.netty;
 
-import com.ysc.rpc.codec.RpcDecoder;
-import com.ysc.rpc.codec.RpcEncoder;
 import com.ysc.rpc.request.RpcRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -92,9 +90,9 @@ public abstract class ClientNode {
               @Override
               protected void initChannel(final SocketChannel ch) {
                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 4, 0, 4));
-                ch.pipeline().addLast(new RpcDecoder());
+                addDecoder(ch.pipeline());
                 ch.pipeline().addLast(new LengthFieldPrepender(4));
-                ch.pipeline().addLast(new RpcEncoder());
+                addEncoder(ch.pipeline());
                 ch.pipeline().addLast(LOGGING_HANDLER);
 
                 addOtherHandlers(ch.pipeline());
@@ -104,7 +102,11 @@ public abstract class ClientNode {
     started = true;
   }
 
-  protected abstract void addOtherHandlers(ChannelPipeline pipeline);
+  protected abstract void addDecoder(final ChannelPipeline pipeline);
+
+  protected abstract void addEncoder(final ChannelPipeline pipeline);
+
+  protected abstract void addOtherHandlers(final ChannelPipeline pipeline);
 
   /**
    * create a dynamic proxy for the given service interface, which will send RPC requests to the

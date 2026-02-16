@@ -35,6 +35,8 @@ public class WeightedRoundRobinBalancer implements LoadBalancer {
       }
     }
 
-    return weightedInstances.get((currentIndex + 1) % weightedInstances.size());
+    currentIndex = (currentIndex + 1) % weightedInstances.size();
+
+    return weightedInstances.get(currentIndex);
   }
 }

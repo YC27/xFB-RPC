@@ -14,25 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.core.loadbanlance;
+package com.ysc.rpc.codec.decoder;
 
-import com.ysc.entity.ServiceInstance;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import java.util.List;
 
-public class RoundRobinBalancer implements LoadBalancer {
+public class RpcDecoder extends ByteToMessageDecoder {
 
-  int currentIndex = -1;
+  private final String decoderType;
+
+  public RpcDecoder(final String decoderType) {
+    this.decoderType = decoderType;
+  }
 
   @Override
-  public ServiceInstance select(final String serviceId) {
-    final List<ServiceInstance> instances = getServiceInstances(serviceId);
-
-    if (instances == null || instances.isEmpty()) {
-      return null;
-    }
-
-    currentIndex = (currentIndex + 1) % instances.size();
-
-    return instances.get(currentIndex);
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    final byte[] bytes = new byte[in.readableBytes()];
+    in.readBytes(bytes);
+    out.add(Decoder.getDecoder(decoderType).decode(bytes));
   }
 }

@@ -14,25 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.core.loadbanlance;
+package com.ysc.rpc.codec.decoder;
 
-import com.ysc.entity.ServiceInstance;
-import java.util.List;
+import java.util.Map;
 
-public class RoundRobinBalancer implements LoadBalancer {
+@FunctionalInterface
+public interface Decoder {
 
-  int currentIndex = -1;
+  Map<String, Decoder> DECODER_MAP = Map.of("java", new JdkDecoder());
 
-  @Override
-  public ServiceInstance select(final String serviceId) {
-    final List<ServiceInstance> instances = getServiceInstances(serviceId);
+  /**
+   * Decode the given byte array into an object.
+   *
+   * @param bytes the byte array to decode
+   * @return the decoded object
+   * @throws Exception if any error occurs during decoding
+   */
+  Object decode(byte[] bytes) throws Exception;
 
-    if (instances == null || instances.isEmpty()) {
-      return null;
+  static Decoder getDecoder(final String serializationType) {
+    Decoder decoder = DECODER_MAP.get(serializationType);
+    if (decoder == null) {
+      throw new IllegalArgumentException("Unsupported serialization type: " + serializationType);
     }
-
-    currentIndex = (currentIndex + 1) % instances.size();
-
-    return instances.get(currentIndex);
+    return decoder;
   }
 }

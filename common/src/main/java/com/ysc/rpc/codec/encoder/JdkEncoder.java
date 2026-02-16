@@ -14,29 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.codec;
+package com.ysc.rpc.codec.encoder;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.List;
+import io.netty.handler.codec.EncoderException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 
-public class RpcDecoder extends ByteToMessageDecoder {
-
+public class JdkEncoder implements Encoder {
   @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+  public byte[] encode(final Object obj) throws EncoderException {
+    try (final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+      oos.writeObject(obj);
+      oos.flush();
 
-    final byte[] bytes = new byte[in.readableBytes()];
-    in.readBytes(bytes);
-
-    try (final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        final ObjectInputStream ois = new ObjectInputStream(bis)) {
-
-      Object obj = ois.readObject();
-
-      out.add(obj);
+      return bos.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

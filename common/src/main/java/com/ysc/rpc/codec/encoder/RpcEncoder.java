@@ -14,32 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc.rpc.codec;
+package com.ysc.rpc.codec.encoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class RpcEncoder extends MessageToByteEncoder<Object> {
 
-  @Override
-  protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
+  private final String encoderType;
 
+  public RpcEncoder(final String encoderType) {
+    this.encoderType = encoderType;
+  }
+
+  @Override
+  protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) {
     if (!(msg instanceof Serializable)) {
       throw new IllegalArgumentException("Message must implement Serializable");
     }
 
-    try (final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
-      oos.writeObject(msg);
-      oos.flush();
-
-      final byte[] bytes = bos.toByteArray();
-
-      out.writeBytes(bytes);
-    }
+    out.writeBytes(Encoder.getEncoder(encoderType).encode(msg));
   }
 }
