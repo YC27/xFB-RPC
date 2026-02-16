@@ -14,20 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ysc;
+package com.ysc.rpc.config;
 
-import com.ysc.config.Options;
-import com.ysc.config.RegisterCenterOption;
-import com.ysc.netty.RpcServer;
-
-public class RegisterCenter {
-  public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
-    final Options options = new Options();
-    options.logAllOptions();
-
-    final RpcServer server = new RpcServer("register-center", RegisterCenterOption.PORT.value());
-    server.start();
-
-    Thread.currentThread().join();
-  }
+public class RpcServerOption extends Options {
+  public static final Option<Integer> PORT =
+      new Option<Integer>("port", 8080) {
+        @Override
+        public void setValue(final String valueString) {
+          value = Integer.parseInt(valueString);
+        }
+      };
 }

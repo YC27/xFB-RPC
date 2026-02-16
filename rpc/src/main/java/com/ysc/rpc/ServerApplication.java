@@ -17,12 +17,16 @@
 package com.ysc.rpc;
 
 import com.ysc.api.UserService;
+import com.ysc.rpc.config.Options;
 import com.ysc.rpc.impl.UserServiceImpl;
 import com.ysc.rpc.netty.RpcServer;
 import java.util.List;
 
 public class ServerApplication {
   public static void main(String[] args) throws InterruptedException {
+    final Options options = new Options();
+    options.logAllOptions();
+
     final RpcServer server = new RpcServer("server", 8080);
     server.start();
 
